@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Jalan GAN Service</title>
+    <!-- Script resmi dari Google untuk Login -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        button { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #357ae8; }
+        #status { margin-top: 20px; font-weight: bold; color: green; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Dashboard Jalan GAN Service Laptop</h1>
+        <p>Silakan login untuk menghubungkan dashboard dengan Google Bisnisku.</p>
+        
+        <!-- Tombol Pemicu Login -->
+        <button id="loginBtn" onclick="loginGoogle()">Login Akun Google</button>
+        
+        <!-- Tempat menampilkan status -->
+        <p id="status"></p>
+    </div>
+
+    <script>
+        let tokenClient;
+        let accessToken;
+
+        // Menyiapkan konfigurasi otentikasi saat halaman selesai dimuat
+        window.onload = function () {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                // Client ID milik Jalan GAN Service Laptop sudah terpasang
+                client_id: '623025050935-4pht8ql20cn49091ic3vrjero327oct7.apps.googleusercontent.com',
+                
+                // Scope ini wajib agar kita punya izin mengedit data profil bisnis
+                scope: 'https://www.googleapis.com/auth/business.manage',
+                callback: (tokenResponse) => {
+                    accessToken = tokenResponse.access_token;
+                    document.getElementById('status').innerText = "✅ Login Berhasil! Token berhasil didapatkan.";
+                    console.log("Ini adalah Access Token rahasiamu: ", accessToken);
+                    // Nanti token ini yang kita pakai untuk ubah jadwal & posting
+                },
+            });
+        };
+
+        // Fungsi yang berjalan saat tombol diklik
+        function loginGoogle() {
+            tokenClient.requestAccessToken();
+        }
+    </script>
+
+</body>
+</html>
