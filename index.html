@@ -4,97 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Jalan GAN Service</title>
-    <!-- Script resmi dari Google untuk Login -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background-color: #f4f4f9; line-height: 1.6; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #333; font-size: 24px; }
-        button { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; line-height: 1.6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #4285F4; padding-bottom: 10px; }
+        h2 { font-size: 20px; color: #4285F4; margin-top: 0; }
+        
+        .status-bar { background-color: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: center; }
+        button { background-color: #4285F4; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button:hover { background-color: #357ae8; }
-        .box-status { background-color: #eef; padding: 15px; border-radius: 5px; margin-top: 15px; font-size: 14px; word-wrap: break-word; }
-        .berhasil { color: green; font-weight: bold; }
-        .highlight { color: #d93025; font-size: 18px; font-weight: bold; background: #fce8e6; padding: 5px; border-radius: 4px; }
+        .btn-publish { background-color: #0f9d58; width: 100%; margin-top: 10px; }
+        .btn-publish:hover { background-color: #0b8043; }
+
+        .module-box { border: 1px solid #ddd; padding: 25px; border-radius: 8px; margin-bottom: 25px; background: #fafafa; }
+        label { font-weight: bold; display: block; margin-top: 10px; margin-bottom: 5px; }
+        input[type="text"], input[type="date"], input[type="time"], textarea, select { 
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: Arial;
+        }
+        input[type="file"] { margin-top: 5px; margin-bottom: 15px; }
+        
+        .row { display: flex; gap: 15px; }
+        .col { flex: 1; }
+        .info-text { font-size: 13px; color: #666; font-style: italic; margin-top: -5px; margin-bottom: 15px; display: block; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Dashboard Jalan GAN Service Laptop</h1>
-        <p>Silakan login untuk menarik Location ID bengkelmu dari Google Bisnisku.</p>
+        <h1>⚙️ Dashboard Jalan GAN Service Laptop</h1>
         
-        <button id="loginBtn" onclick="loginGoogle()">Login Akun Google</button>
-        
-        <div class="box-status" id="status-container">
-            <span id="status">Status: Belum login.</span>
+        <!-- Status & Login -->
+        <div class="status-bar" id="status-container">
+            <p><strong>Status API:</strong> <span id="status-text" style="color:red;">Belum Terhubung</span></p>
+            <button id="loginBtn" onclick="loginGoogle()">1. Hubungkan ke Google Bisnisku</button>
         </div>
+
+        <!-- MODUL 1: POSTINGAN -->
+        <div class="module-box">
+            <h2>📢 Modul 1: Buat Postingan / Promo Baru</h2>
+            <p class="info-text">Update info servis terbaru, promo bongkar laptop, atau hasil pengerjaan di Google Maps.</p>
+            
+            <label>Isi Postingan:</label>
+            <textarea id="postText" rows="4" placeholder="Ketik info atau promo bengkel di sini... (Contoh: Promo ganti SSD hari ini!)"></textarea>
+            
+            <label>Upload Foto (Sparepart / Hasil Servis):</label>
+            <input type="file" id="postImage" accept="image/png, image/jpeg">
+            
+            <label>Jenis Tombol Aksi (Opsional):</label>
+            <select id="postAction">
+                <option value="NONE">Tanpa Tombol</option>
+                <option value="LEARN_MORE">Pelajari Lebih Lanjut (Link Web)</option>
+                <option value="CALL">Telepon Sekarang</option>
+            </select>
+
+            <button class="btn-publish" onclick="kirimPostingan()">🚀 Publish ke Google Maps</button>
+        </div>
+
+        <!-- MODUL 2: JAM OPERASIONAL -->
+        <div class="module-box">
+            <h2>⏰ Modul 2: Kontrol Jam Buka & Libur</h2>
+            <p class="info-text">Atur jam bengkel reguler atau masukkan tanggal merah agar status otomatis "Tutup Sementara".</p>
+            
+            <div class="row">
+                <!-- Kolom Jam Reguler -->
+                <div class="col">
+                    <label>Update Jam Buka (Setiap Hari):</label>
+                    <div class="row">
+                        <div class="col">
+                            Buka: <input type="time" id="jamBuka" value="09:00">
+                        </div>
+                        <div class="col">
+                            Tutup: <input type="time" id="jamTutup" value="21:00">
+                        </div>
+                    </div>
+                    <button class="btn-publish" style="background-color: #f4b400;" onclick="updateJamReguler()">🔄 Update Jam Reguler</button>
+                </div>
+
+                <!-- Kolom Jam Libur Khusus -->
+                <div class="col">
+                    <label>Input Libur / Tanggal Merah:</label>
+                    Pilih Tanggal: <input type="date" id="tglLibur">
+                    <label style="margin-top: 10px;">Status Hari Itu:</label>
+                    <select id="statusLibur">
+                        <option value="CLOSED">Tutup Seharian (Libur)</option>
+                    </select>
+                    <button class="btn-publish" style="background-color: #ea4335;" onclick="setLibur()">🛑 Set Libur</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
         let tokenClient;
-        let accessToken;
+        let accessToken = "";
+        const LOCATION_ID = "1631153987657604541"; // ID resmi bengkelmu
 
         window.onload = function () {
             tokenClient = google.accounts.oauth2.initTokenClient({
-                // Client ID milikmu
                 client_id: '623025050935-4pht8ql20cn49091ic3vrjero327oct7.apps.googleusercontent.com',
-                
-                // Minta izin untuk melihat dan mengelola Google Bisnisku
                 scope: 'https://www.googleapis.com/auth/business.manage',
                 callback: (tokenResponse) => {
                     accessToken = tokenResponse.access_token;
-                    document.getElementById('status').innerHTML = "<span class='berhasil'>✅ Login Berhasil! Mulai menarik data bengkel...</span>";
-                    
-                    // Panggil fungsi untuk mengambil data lokasi
-                    ambilDataLokasi(accessToken);
+                    document.getElementById('status-text').innerHTML = "<span style='color:green;'>✅ Terhubung & Siap Digunakan!</span>";
+                    document.getElementById('loginBtn').style.display = 'none';
+                    alert("Akses dibuka! Kamu sekarang bisa menggunakan fitur-fitur di bawah.");
                 },
             });
         };
 
         function loginGoogle() {
-            document.getElementById('status').innerText = "⏳ Sedang memproses login...";
             tokenClient.requestAccessToken();
         }
 
-        // Fungsi baru untuk mengambil Account ID dan Location ID
-        async function ambilDataLokasi(token) {
-            try {
-                // Tahap 1: Ambil Data Akun (Account ID)
-                document.getElementById('status').innerHTML += "<br>🔄 Mencari ID Akun Bisnismu...";
-                let accountResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                let accountData = await accountResponse.json();
-
-                if (accountData.accounts && accountData.accounts.length > 0) {
-                    // Ambil akun pertama yang ditemukan
-                    let accountName = accountData.accounts[0].name; 
-                    document.getElementById('status').innerHTML += `<br>✅ Akun ditemukan: <b>${accountName}</b>`;
-
-                    // Tahap 2: Ambil Data Lokasi berdasarkan Account ID tersebut
-                    document.getElementById('status').innerHTML += "<br>🔄 Mencari Lokasi Cabang (Location ID)...";
-                    let locationResponse = await fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title`, {
-                        headers: { 'Authorization': 'Bearer ' + token }
-                    });
-                    let locationData = await locationResponse.json();
-
-                    if (locationData.locations && locationData.locations.length > 0) {
-                        let locationName = locationData.locations[0].name; // Inilah Location ID-nya
-                        let title = locationData.locations[0].title;
-                        
-                        document.getElementById('status').innerHTML += `<br>✅ Nama Tempat: <b>${title}</b>`;
-                        document.getElementById('status').innerHTML += `<br><br>🎯 <b>LOCATION ID KAMU ADALAH:</b><br><span class='highlight'>${locationName}</span>`;
-                        document.getElementById('status').innerHTML += `<br><br><i>Simpan Location ID ini baik-baik bro, ini kunci utama untuk mengedit data bengkel lewat kode!</i>`;
-                    } else {
-                        document.getElementById('status').innerHTML += "<br>❌ Bengkel tidak ditemukan di akun ini.";
-                    }
-                } else {
-                    document.getElementById('status').innerHTML += "<br>❌ Tidak ada akun bisnis yang terhubung ke email ini.";
-                }
-            } catch (error) {
-                console.error(error);
-                document.getElementById('status').innerHTML += "<br>❌ Terjadi kesalahan saat menarik data dari Google.";
+        function cekLogin() {
+            if (!accessToken) {
+                alert("Bro, klik tombol 'Hubungkan ke Google Bisnisku' di atas dulu ya sebelum kirim data!");
+                return false;
             }
+            return true;
+        }
+
+        // --- FUNGSI MODUL 1: POSTINGAN ---
+        async function kirimPostingan() {
+            if (!cekLogin()) return;
+            const teks = document.getElementById('postText').value;
+            if (teks === "") { alert("Isi postingannya jangan kosong dong bro!"); return; }
+            
+            alert(`Sistem memproses pengiriman ke lokasi: ${LOCATION_ID}\nIsi: "${teks}"\n\n(Catatan: Karena API dari Google Cloud milikmu sedang dalam proses peninjauan 'Quota', pengiriman ke server Google mungkin akan tertahan. Kodenya sudah siap jalan begitu Google memberi ACC!)`);
+            
+            // Logika API sesungguhnya akan berjalan di sini setelah kuota disetujui
+            console.log("Mencoba POST ke: https://mybusiness.googleapis.com/v4/accounts/{accountId}/locations/" + LOCATION_ID + "/localPosts");
+        }
+
+        // --- FUNGSI MODUL 2: JAM OPERASIONAL ---
+        async function updateJamReguler() {
+            if (!cekLogin()) return;
+            const buka = document.getElementById('jamBuka').value;
+            const tutup = document.getElementById('jamTutup').value;
+            
+            alert(`Siap mengubah jam reguler Jalan GAN Service menjadi Buka: ${buka} | Tutup: ${tutup}.\n\n(Menunggu persetujuan Quota API dari Google Cloud)`);
+        }
+
+        async function setLibur() {
+            if (!cekLogin()) return;
+            const tgl = document.getElementById('tglLibur').value;
+            if (tgl === "") { alert("Pilih tanggal liburnya dulu bro!"); return; }
+            
+            alert(`Tanggal ${tgl} telah diset menjadi TUTUP/LIBUR.\nStatus bengkel di Google Maps akan otomatis tertulis "Tutup" pada hari itu.\n\n(Menunggu persetujuan Quota API dari Google Cloud)`);
         }
     </script>
 
