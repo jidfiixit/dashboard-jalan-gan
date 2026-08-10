@@ -7,51 +7,94 @@
     <!-- Script resmi dari Google untuk Login -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 40px; background-color: #f4f4f9; }
+        body { font-family: Arial, sans-serif; padding: 40px; background-color: #f4f4f9; line-height: 1.6; }
         .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-        button { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; }
+        h1 { color: #333; font-size: 24px; }
+        button { background-color: #4285F4; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
         button:hover { background-color: #357ae8; }
-        #status { margin-top: 20px; font-weight: bold; color: green; word-break: break-all; }
+        .box-status { background-color: #eef; padding: 15px; border-radius: 5px; margin-top: 15px; font-size: 14px; word-wrap: break-word; }
+        .berhasil { color: green; font-weight: bold; }
+        .highlight { color: #d93025; font-size: 18px; font-weight: bold; background: #fce8e6; padding: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Dashboard Jalan GAN Service Laptop</h1>
-        <p>Silakan login untuk menghubungkan dashboard dengan Google Bisnisku.</p>
+        <p>Silakan login untuk menarik Location ID bengkelmu dari Google Bisnisku.</p>
         
-        <!-- Tombol Pemicu Login -->
         <button id="loginBtn" onclick="loginGoogle()">Login Akun Google</button>
         
-        <!-- Tempat menampilkan status -->
-        <p id="status"></p>
+        <div class="box-status" id="status-container">
+            <span id="status">Status: Belum login.</span>
+        </div>
     </div>
 
     <script>
         let tokenClient;
         let accessToken;
 
-        // Menyiapkan konfigurasi otentikasi saat halaman selesai dimuat
         window.onload = function () {
             tokenClient = google.accounts.oauth2.initTokenClient({
-                // Client ID milik Jalan GAN Service Laptop sudah terpasang
+                // Client ID milikmu
                 client_id: '623025050935-4pht8ql20cn49091ic3vrjero327oct7.apps.googleusercontent.com',
                 
-                // Scope ini wajib agar kita punya izin mengedit data profil bisnis
+                // Minta izin untuk melihat dan mengelola Google Bisnisku
                 scope: 'https://www.googleapis.com/auth/business.manage',
                 callback: (tokenResponse) => {
                     accessToken = tokenResponse.access_token;
-                    document.getElementById('status').innerText = "✅ Login Berhasil! Token berhasil didapatkan.";
-                    console.log("Ini adalah Access Token rahasiamu: ", accessToken);
-                    // Nanti token ini yang kita pakai untuk ubah jadwal & posting
+                    document.getElementById('status').innerHTML = "<span class='berhasil'>✅ Login Berhasil! Mulai menarik data bengkel...</span>";
+                    
+                    // Panggil fungsi untuk mengambil data lokasi
+                    ambilDataLokasi(accessToken);
                 },
             });
         };
 
-        // Fungsi yang berjalan saat tombol diklik
         function loginGoogle() {
+            document.getElementById('status').innerText = "⏳ Sedang memproses login...";
             tokenClient.requestAccessToken();
+        }
+
+        // Fungsi baru untuk mengambil Account ID dan Location ID
+        async function ambilDataLokasi(token) {
+            try {
+                // Tahap 1: Ambil Data Akun (Account ID)
+                document.getElementById('status').innerHTML += "<br>🔄 Mencari ID Akun Bisnismu...";
+                let accountResponse = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                let accountData = await accountResponse.json();
+
+                if (accountData.accounts && accountData.accounts.length > 0) {
+                    // Ambil akun pertama yang ditemukan
+                    let accountName = accountData.accounts[0].name; 
+                    document.getElementById('status').innerHTML += `<br>✅ Akun ditemukan: <b>${accountName}</b>`;
+
+                    // Tahap 2: Ambil Data Lokasi berdasarkan Account ID tersebut
+                    document.getElementById('status').innerHTML += "<br>🔄 Mencari Lokasi Cabang (Location ID)...";
+                    let locationResponse = await fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=name,title`, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    let locationData = await locationResponse.json();
+
+                    if (locationData.locations && locationData.locations.length > 0) {
+                        let locationName = locationData.locations[0].name; // Inilah Location ID-nya
+                        let title = locationData.locations[0].title;
+                        
+                        document.getElementById('status').innerHTML += `<br>✅ Nama Tempat: <b>${title}</b>`;
+                        document.getElementById('status').innerHTML += `<br><br>🎯 <b>LOCATION ID KAMU ADALAH:</b><br><span class='highlight'>${locationName}</span>`;
+                        document.getElementById('status').innerHTML += `<br><br><i>Simpan Location ID ini baik-baik bro, ini kunci utama untuk mengedit data bengkel lewat kode!</i>`;
+                    } else {
+                        document.getElementById('status').innerHTML += "<br>❌ Bengkel tidak ditemukan di akun ini.";
+                    }
+                } else {
+                    document.getElementById('status').innerHTML += "<br>❌ Tidak ada akun bisnis yang terhubung ke email ini.";
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerHTML += "<br>❌ Terjadi kesalahan saat menarik data dari Google.";
+            }
         }
     </script>
 
